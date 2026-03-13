@@ -14,11 +14,15 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form-start'
 import { signupSchema } from '#/schemas/auth'
+import { authClient } from '#/lib/auth-client'
+import { toast } from 'sonner'
 
 export function SignupForm() {
+  const navigate = useNavigate()
+
   const form = useForm({
     defaultValues: {
       fullName: '',
@@ -29,7 +33,22 @@ export function SignupForm() {
       onSubmit: signupSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log(value)
+      await authClient.signUp.email({
+        name: value.fullName,
+        email: value.email,
+        password: value.password,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success('Account created successfully')
+            navigate({
+              to: '/',
+            })
+          },
+          onError: ({ error }) => {
+            toast.error(error.message)
+          },
+        },
+      })
     },
   })
 
@@ -116,7 +135,7 @@ export function SignupForm() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
-                      placeholder="John Doe"
+                      placeholder="************"
                       autoComplete="off"
                     />
                     {isInvalid && (
