@@ -1,189 +1,209 @@
-"use client"
+'use client'
 
-import * as React from "react"
+import * as React from 'react'
 
-import { NavMain } from "#/components/nav-main"
-import { NavProjects } from "#/components/nav-projects"
-import { NavUser } from "#/components/nav-user"
-import { TeamSwitcher } from "#/components/team-switcher"
+import { NavPrimary } from '#/components/nav-primary'
+import { NavUser } from '#/components/nav-user'
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
-} from "#/components/ui/sidebar"
-import { GalleryVerticalEndIcon, AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
+} from '#/components/ui/sidebar'
+import {
+  GalleryVerticalEndIcon,
+  AudioLinesIcon,
+  TerminalIcon,
+  TerminalSquareIcon,
+  BotIcon,
+  BookOpenIcon,
+  Settings2Icon,
+  FrameIcon,
+  PieChartIcon,
+  MapIcon,
+  BookmarkIcon,
+  Import,
+  Compass,
+} from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import type { NavPrimaryProps } from '#/lib/types'
 
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: 'shadcn',
+    email: 'm@example.com',
+    avatar: '/avatars/shadcn.jpg',
   },
   teams: [
     {
-      name: "Acme Inc",
-      logo: (
-        <GalleryVerticalEndIcon
-        />
-      ),
-      plan: "Enterprise",
+      name: 'Acme Inc',
+      logo: <GalleryVerticalEndIcon />,
+      plan: 'Enterprise',
     },
     {
-      name: "Acme Corp.",
-      logo: (
-        <AudioLinesIcon
-        />
-      ),
-      plan: "Startup",
+      name: 'Acme Corp.',
+      logo: <AudioLinesIcon />,
+      plan: 'Startup',
     },
     {
-      name: "Evil Corp.",
-      logo: (
-        <TerminalIcon
-        />
-      ),
-      plan: "Free",
+      name: 'Evil Corp.',
+      logo: <TerminalIcon />,
+      plan: 'Free',
     },
   ],
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: (
-        <TerminalSquareIcon
-        />
-      ),
+      title: 'Playground',
+      url: '#',
+      icon: <TerminalSquareIcon />,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: 'History',
+          url: '#',
         },
         {
-          title: "Starred",
-          url: "#",
+          title: 'Starred',
+          url: '#',
         },
         {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: (
-        <BotIcon
-        />
-      ),
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
+          title: 'Settings',
+          url: '#',
         },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: (
-        <BookOpenIcon
-        />
-      ),
+      title: 'Models',
+      url: '#',
+      icon: <BotIcon />,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: 'Genesis',
+          url: '#',
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: 'Explorer',
+          url: '#',
         },
         {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          title: 'Quantum',
+          url: '#',
         },
       ],
     },
     {
-      title: "Settings",
-      url: "#",
-      icon: (
-        <Settings2Icon
-        />
-      ),
+      title: 'Documentation',
+      url: '#',
+      icon: <BookOpenIcon />,
       items: [
         {
-          title: "General",
-          url: "#",
+          title: 'Introduction',
+          url: '#',
         },
         {
-          title: "Team",
-          url: "#",
+          title: 'Get Started',
+          url: '#',
         },
         {
-          title: "Billing",
-          url: "#",
+          title: 'Tutorials',
+          url: '#',
         },
         {
-          title: "Limits",
-          url: "#",
+          title: 'Changelog',
+          url: '#',
+        },
+      ],
+    },
+    {
+      title: 'Settings',
+      url: '#',
+      icon: <Settings2Icon />,
+      items: [
+        {
+          title: 'General',
+          url: '#',
+        },
+        {
+          title: 'Team',
+          url: '#',
+        },
+        {
+          title: 'Billing',
+          url: '#',
+        },
+        {
+          title: 'Limits',
+          url: '#',
         },
       ],
     },
   ],
   projects: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: (
-        <FrameIcon
-        />
-      ),
+      name: 'Design Engineering',
+      url: '#',
+      icon: <FrameIcon />,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: (
-        <PieChartIcon
-        />
-      ),
+      name: 'Sales & Marketing',
+      url: '#',
+      icon: <PieChartIcon />,
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: (
-        <MapIcon
-        />
-      ),
+      name: 'Travel',
+      url: '#',
+      icon: <MapIcon />,
     },
   ],
 }
+
+const navItems: NavPrimaryProps['items'] = [
+  {
+    title: 'Items',
+    icon: BookmarkIcon,
+    to: '/dashboard/items',
+  },
+  {
+    title: 'Import',
+    icon: Import,
+    to: '/dashboard/import',
+  },
+  {
+    title: 'Discover',
+    icon: Compass,
+    to: '/dashboard/discover',
+  },
+]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link to="/dashboard" className="flex items-center gap-3">
+                <div className="bg-sidebar-primary text-siderbar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <BookmarkIcon className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="font-medium">Recall</span>
+                  <span className="text-xs">Your AI Knowledge Base</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        {/*  <TeamSwitcher teams={data.teams} /> */}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/*  <NavMain items={data.navMain} /> */}
+        <NavPrimary items={navItems} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
