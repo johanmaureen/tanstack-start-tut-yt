@@ -29,7 +29,7 @@ import {
   Import,
   Compass,
 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
+import { Link, linkOptions } from '@tanstack/react-router'
 import type { NavPrimaryProps } from '#/lib/types'
 
 // This is sample data.
@@ -162,23 +162,26 @@ const data = {
   ],
 }
 
-const navItems: NavPrimaryProps['items'] = [
+const navItems: NavPrimaryProps['items'] = linkOptions([
   {
     title: 'Items',
     icon: BookmarkIcon,
     to: '/dashboard/items',
+    activeOptions: { exact: false },
   },
   {
     title: 'Import',
     icon: Import,
     to: '/dashboard/import',
+    activeOptions: { exact: false },
   },
   {
     title: 'Discover',
     icon: Compass,
     to: '/dashboard/discover',
+    activeOptions: { exact: false },
   },
-]
+])
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
