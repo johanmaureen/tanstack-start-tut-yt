@@ -152,7 +152,6 @@ export function SignupForm() {
 
             <FieldGroup>
               <Field>
-                <Button type="submit"></Button>
                 <Button disabled={isPending} type="submit">
                   {isPending ? 'Creating...' : 'Create Account'}
                 </Button>
