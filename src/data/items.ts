@@ -3,18 +3,18 @@ import { firecrawl } from '#/lib/firecrawl'
 import { extractSchema, importSchema } from '#/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
 import type z from 'zod'
-import { getSessioFn } from './session'
+import { authFnMiddleware } from '#/middlewares/auth'
 
 export const scrapeUrlFn = createServerFn({
   method: 'POST',
 })
+  .middleware([authFnMiddleware])
   .inputValidator(importSchema)
-  .handler(async ({ data }) => {
-    const session = await getSessioFn()
+  .handler(async ({ data, context }) => {
     const item = await prisma.savedItem.create({
       data: {
         url: data.url,
-        userId: session.user.id,
+        userId: context.session.user.id,
         status: 'PROCESSING',
       },
     })
