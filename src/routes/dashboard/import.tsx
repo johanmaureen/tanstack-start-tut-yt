@@ -15,7 +15,7 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '#/components/ui/tabs'
-import { mapUrlFn, scrapeUrlFn } from '#/data/items'
+import { bulkScrapeUrlsFn, mapUrlFn, scrapeUrlFn } from '#/data/items'
 import { bulkImportSchema, importSchema } from '#/schemas/import'
 import type { SearchResultWeb } from '@mendable/firecrawl-js'
 import { useForm } from '@tanstack/react-form-start'
@@ -30,10 +30,47 @@ export const Route = createFileRoute('/dashboard/import')({
 
 function RouteComponent() {
   const [isPending, startTransition] = useTransition()
+  const [bulkIsPending, startBulkTransition] = useTransition()
 
   const [discoveredLinks, setDiscoveredLinks] = useState<
     Array<SearchResultWeb>
   >([])
+
+  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
+
+  function handleSelectAll() {
+    if (selectedUrls.size === discoveredLinks.length) {
+      setSelectedUrls(new Set())
+    } else {
+      setSelectedUrls(new Set(discoveredLinks.map((link) => link.url)))
+    }
+  }
+
+  function handleToggleUrl(url: string) {
+    const newSelected = new Set(selectedUrls)
+    if (newSelected.has(url)) {
+      newSelected.delete(url)
+    } else {
+      newSelected.add(url)
+    }
+    setSelectedUrls(newSelected)
+  }
+
+  function handlebulkImport() {
+    startBulkTransition(async () => {
+      if (selectedUrls.size === 0) {
+        toast.error('Please select at least one URL')
+        return
+      }
+      await bulkScrapeUrlsFn({
+        data: {
+          urls: Array.from(selectedUrls),
+        },
+      })
+
+      toast.success(`Successfully imported ${selectedUrls.size} URLs`)
+    })
+  }
 
   const form = useForm({
     defaultValues: {
@@ -156,7 +193,7 @@ function RouteComponent() {
                   Discover and import multiple URLs from a website at once 🚀
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()
@@ -240,8 +277,14 @@ function RouteComponent() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <p>Found {discoveredLinks.length} URLs</p>
-                      <Button variant="outline" size="sm">
-                        Select all
+                      <Button
+                        onClick={handleSelectAll}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {selectedUrls.size === discoveredLinks.length
+                          ? 'Deslect All'
+                          : 'Select all'}
                       </Button>
                     </div>
                     <div className="max-h-80 space-y-2 overflow-y-auto rounded-md border p-4">
@@ -250,7 +293,11 @@ function RouteComponent() {
                           key={link.url}
                           className="hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2"
                         >
-                          <Checkbox className="mt-0.5" />
+                          <Checkbox
+                            checked={selectedUrls.has(link.url)}
+                            onCheckedChange={() => handleToggleUrl(link.url)}
+                            className="mt-0.5"
+                          />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">
                               {link.title ?? 'Title has not been found'}
@@ -266,7 +313,21 @@ function RouteComponent() {
                         </label>
                       ))}
                     </div>
-                    <Button className="w-full">Import</Button>
+                    <Button
+                      onClick={handlebulkImport}
+                      disabled={bulkIsPending}
+                      className="w-full"
+                      type="button"
+                    >
+                      {bulkIsPending ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        `Import ${selectedUrls.size} URLs`
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>
