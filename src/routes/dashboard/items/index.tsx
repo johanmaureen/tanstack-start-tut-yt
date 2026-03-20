@@ -1,67 +1,149 @@
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardHeader, CardTitle } from '#/components/ui/card'
+import { Input } from '#/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '#/components/ui/select'
 import { getItemsFn } from '#/data/items'
+import { ItemStatus } from '#/generated/prisma/enums'
 import { copyToClipboard } from '#/lib/clipboard'
 import { Link } from '@tanstack/react-router'
 import { createFileRoute } from '@tanstack/react-router'
 import { Copy } from 'lucide-react'
+import z from 'zod'
+import { zodValidator } from '@tanstack/zod-adapter'
+import { useEffect, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+
+const itemSearchSChema = z.object({
+  q: z.string().default(''),
+  status: z.union([z.literal('all'), z.nativeEnum(ItemStatus)]).default('all'),
+})
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
   loader: () => getItemsFn(),
+  validateSearch: zodValidator(itemSearchSChema),
 })
 
 function RouteComponent() {
   const data = Route.useLoaderData()
+  const { q, status } = Route.useSearch()
+  const [searchInput, setSearchInput] = useState(q)
+  const navigate = useNavigate({ from: Route.fullPath })
+
+  useEffect(() => {
+    if (searchInput === q) return
+    const timeOutId = setTimeout(() => {
+      navigate({
+        search: (prev) => ({ ...prev, q: searchInput }),
+      })
+    }, 300)
+    return () => clearTimeout(timeOutId)
+  }, [searchInput, q, navigate])
+
+  const filteredItems = data.filter((item) => {
+    const matchesQuery =
+      q === '' ||
+      item.title?.toLowerCase().includes(q.toLowerCase()) ||
+      item.tags.some((tag) => tag.toLowerCase().includes(q.toLowerCase()))
+
+    const matchesStatus = status === 'all' || item.status === status
+
+    return matchesQuery && matchesStatus
+  })
+
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {data.map((item) => (
-        <Card
-          key={item.id}
-          className="group overflow-hidden transition-all hover:shadow-lg pt-0"
+    <div className="flex flex-1 flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold">Saved Items</h1>
+        <p className="text-muted-foreground">
+          Your saved articles and content!
+        </p>
+      </div>
+      <div className="flex gap-4">
+        <Input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by title or tags"
+        />
+        <Select
+          value={status}
+          onValueChange={(value) =>
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                status: value as typeof status,
+              }),
+            })
+          }
         >
-          <Link to="/dashboard" className="block">
-            {item.ogImage && (
-              <div className="aspect-video w-full overflow-hidden bg-muted">
-                <img
-                  src={item.ogImage}
-                  alt={item.title ?? 'Article Thumbnail'}
-                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                />
-              </div>
-            )}
-            <CardHeader className="space-y-3 pt-4">
-              <div className="flex items-center justify-between gap-2">
-                <Badge
-                  variant={
-                    item.status === 'COMPLETED' ? 'default' : 'secondary'
-                  }
-                >
-                  {item.status.toLowerCase()}
-                </Badge>
-                <Button
-                  onClick={async (e) => {
-                    e.preventDefault()
-                    await copyToClipboard(item.url)
-                  }}
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                >
-                  <Copy className="size-4" />
-                </Button>
-              </div>
-              <CardTitle className="line-clamp-1 text-xl leading-snug group-hover:text-primary transition-colors">
-                {item.title}
-              </CardTitle>
-              {item.author && (
-                <p className="text-xs text-muted-foreground">{item.author}</p>
+          <SelectTrigger className="w-40 ">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {Object.values(ItemStatus).map((status) => (
+              <SelectItem value={status} key={status}>
+                {status.charAt(0) + status.slice(1).toLowerCase()}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {filteredItems.map((item) => (
+          <Card
+            key={item.id}
+            className="group overflow-hidden transition-all hover:shadow-lg pt-0"
+          >
+            <Link to="/dashboard" className="block">
+              {item.ogImage && (
+                <div className="aspect-video w-full overflow-hidden bg-muted">
+                  <img
+                    src={item.ogImage}
+                    alt={item.title ?? 'Article Thumbnail'}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </div>
               )}
-            </CardHeader>
-          </Link>
-        </Card>
-      ))}
+              <CardHeader className="space-y-3 pt-4">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge
+                    variant={
+                      item.status === 'COMPLETED' ? 'default' : 'secondary'
+                    }
+                  >
+                    {item.status.toLowerCase()}
+                  </Badge>
+                  <Button
+                    onClick={async (e) => {
+                      e.preventDefault()
+                      await copyToClipboard(item.url)
+                    }}
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                  >
+                    <Copy className="size-4" />
+                  </Button>
+                </div>
+                <CardTitle className="line-clamp-1 text-xl leading-snug group-hover:text-primary transition-colors">
+                  {item.title}
+                </CardTitle>
+                {item.author && (
+                  <p className="text-xs text-muted-foreground">{item.author}</p>
+                )}
+              </CardHeader>
+            </Link>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
