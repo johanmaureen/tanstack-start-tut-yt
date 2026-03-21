@@ -1,8 +1,24 @@
-import { buttonVariants } from '#/components/ui/button'
+import { MessageResponse } from '#/components/ai-elements/message'
+import { Button, buttonVariants } from '#/components/ui/button'
+import { Card, CardContent } from '#/components/ui/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '#/components/ui/collapsible'
 import { getItemById } from '#/data/items'
-import { Link } from '@tanstack/react-router'
-import { createFileRoute } from '@tanstack/react-router'
-import { ArrowLeft, Calendar, Clock, ExternalLink, User } from 'lucide-react'
+import { cn } from '#/lib/utils'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import {
+  ArrowLeft,
+  Badge,
+  Calendar,
+  ChevronDown,
+  Clock,
+  ExternalLink,
+  User,
+} from 'lucide-react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/dashboard/items/$itemId')({
   component: RouteComponent,
@@ -11,6 +27,7 @@ export const Route = createFileRoute('/dashboard/items/$itemId')({
 
 function RouteComponent() {
   const data = Route.useLoaderData()
+  const [contentOpen, setContentOpen] = useState(false)
   return (
     <div className="mx-auto max-w-3xl space-y-6 w-full">
       <div className="flex justify-start">
@@ -63,6 +80,36 @@ function RouteComponent() {
           View Orinal
           <ExternalLink className="size-3.5" />
         </a>
+        {data.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {data.tags.map((tag) => (
+              <Badge key={tag}>{tag}</Badge>
+            ))}
+          </div>
+        )}
+        <p>Hey this is for the summary</p>
+        {data.content && (
+          <Collapsible open={contentOpen} onOpenChange={setContentOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <span className="font-medium">Full Content</span>
+                <ChevronDown
+                  className={cn(
+                    contentOpen ? 'rotate-180' : '',
+                    'size-4 transition-transform duration-200',
+                  )}
+                />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <Card className="mt-2">
+                <CardContent>
+                  <MessageResponse>{data.content}</MessageResponse>
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
     </div>
   )
