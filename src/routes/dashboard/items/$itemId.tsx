@@ -16,18 +16,56 @@ import {
   ChevronDown,
   Clock,
   ExternalLink,
+  Loader2,
+  Sparkles,
   User,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useCompletion } from '@ai-sdk/react'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/dashboard/items/$itemId')({
   component: RouteComponent,
   loader: ({ params }) => getItemById({ data: { id: params.itemId } }),
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: loaderData?.title ?? 'Items detial',
+      },
+      {
+        propery: 'og:image',
+        content: loaderData?.ogImage ?? 'xxxx',
+      },
+      {
+        name: 'twitter:title',
+        content: loaderData?.title ?? 'Item Detial',
+      },
+    ],
+  }),
 })
 
 function RouteComponent() {
   const data = Route.useLoaderData()
   const [contentOpen, setContentOpen] = useState(false)
+  const { completion, complete, isLoading } = useCompletion({
+    api: '/api/ai/summary',
+    streamProtocol: 'text',
+    body: {
+      itemId: data.id,
+    },
+    onError: (error) => {
+      toast.error(error.message)
+    },
+  })
+
+  function handleGenerateSummary() {
+    if (!data.content) {
+      toast.error('No content avaible to summarize')
+      return
+    }
+    complete(data.content)
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 w-full">
       <div className="flex justify-start">
@@ -87,7 +125,45 @@ function RouteComponent() {
             ))}
           </div>
         )}
-        <p>Hey this is for the summary</p>
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                  Summary
+                </h1>
+                {completion || data.summary ? (
+                  <MessageResponse>{completion}</MessageResponse>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    {data.content
+                      ? 'No summary yet. Generate one with AI'
+                      : 'No Content avaiable to summarize'}
+                  </p>
+                )}
+              </div>
+              {data.content && !data.summary && (
+                <Button
+                  onClick={handleGenerateSummary}
+                  disabled={isLoading}
+                  size="sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4 " />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
         {data.content && (
           <Collapsible open={contentOpen} onOpenChange={setContentOpen}>
             <CollapsibleTrigger asChild>
@@ -103,8 +179,10 @@ function RouteComponent() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <Card className="mt-2">
-                <CardContent>
-                  <MessageResponse>{data.content}</MessageResponse>
+                <CardContent className="p-0">
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <MessageResponse>{data.content}</MessageResponse>
+                  </div>
                 </CardContent>
               </Card>
             </CollapsibleContent>

@@ -24,7 +24,10 @@ export const authFnMiddleware = createMiddleware({ type: 'function' }).server(
 export const authMiddleware = createMiddleware({ type: 'request' }).server(
   async ({ next, request }) => {
     const url = new URL(request.url)
-    if (!url.password.startsWith('/dashboard')) {
+    if (
+      !url.pathname.startsWith('/dashboard') &&
+      !url.pathname.startsWith('/api')
+    ) {
       return next()
     }
 
