@@ -6,12 +6,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '#/components/ui/collapsible'
-import { getItemById } from '#/data/items'
+import { getItemById, saveSummaryAndGenerateTags } from '#/data/items'
 import { cn } from '#/lib/utils'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   ArrowLeft,
-  Badge,
   Calendar,
   ChevronDown,
   Clock,
@@ -23,6 +22,8 @@ import {
 import { useState } from 'react'
 import { useCompletion } from '@ai-sdk/react'
 import { toast } from 'sonner'
+import { useRouter } from '@tanstack/react-router'
+import { Badge } from '#/components/ui/badge'
 
 export const Route = createFileRoute('/dashboard/items/$itemId')({
   component: RouteComponent,
@@ -45,13 +46,22 @@ export const Route = createFileRoute('/dashboard/items/$itemId')({
 })
 
 function RouteComponent() {
+  const router = useRouter()
   const data = Route.useLoaderData()
   const [contentOpen, setContentOpen] = useState(false)
   const { completion, complete, isLoading } = useCompletion({
     api: '/api/ai/summary',
+    initialCompletion: data.summary ? data.summary : undefined,
     streamProtocol: 'text',
     body: {
       itemId: data.id,
+    },
+    onFinish: async (_prompt, completionText) => {
+      await saveSummaryAndGenerateTags({
+        data: { id: data.id, summary: completionText },
+      })
+      toast.success('Summary generated and saved')
+      router.invalidate()
     },
     onError: (error) => {
       toast.error(error.message)
@@ -121,7 +131,7 @@ function RouteComponent() {
         {data.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {data.tags.map((tag) => (
-              <Badge key={tag}>{tag}</Badge>
+              <Badge>{tag}</Badge>
             ))}
           </div>
         )}
