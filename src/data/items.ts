@@ -1,12 +1,18 @@
 import { prisma } from '#/db'
 import { firecrawl } from '#/lib/firecrawl'
-import { bulkImportSchema, extractSchema, importSchema } from '#/schemas/import'
+import {
+  bulkImportSchema,
+  extractSchema,
+  importSchema,
+  searchSchema,
+} from '#/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
 import z from 'zod'
 import { authFnMiddleware } from '#/middlewares/auth'
 import { notFound } from '@tanstack/react-router'
 import { generateText } from 'ai'
 import { openrouter } from '#/lib/openRouter'
+import type { SearchResultWeb } from '@mendable/firecrawl-js'
 
 export const scrapeUrlFn = createServerFn({
   method: 'POST',
@@ -242,4 +248,21 @@ Example: technology, programming, web development, javascript`,
       },
     })
     return item
+  })
+
+export const searchWebFn = createServerFn({ method: 'POST' })
+  .middleware([authFnMiddleware])
+  .inputValidator(searchSchema)
+  .handler(async ({ data }) => {
+    const result = await firecrawl.search(data.query, {
+      limit: 8,
+      tbs: 'qdr:y',
+      //scrapeOptions: { formats: ['markdown'] },
+    })
+
+    return result.web?.map((item) => ({
+      url: (item as SearchResultWeb).url,
+      title: (item as SearchResultWeb).title,
+      description: (item as SearchResultWeb).description,
+    })) as SearchResultWeb[]
   })
