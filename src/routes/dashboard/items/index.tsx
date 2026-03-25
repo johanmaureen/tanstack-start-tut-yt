@@ -1,6 +1,11 @@
 import { Badge } from '#/components/ui/badge'
 import { Button, buttonVariants } from '#/components/ui/button'
-import { Card, CardHeader, CardTitle } from '#/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
 import {
   Select,
@@ -156,6 +161,20 @@ function ItemsList({
               </CardTitle>
               {item.author && (
                 <p className="text-xs text-muted-foreground">{item.author}</p>
+              )}
+              {item.summary && (
+                <CardDescription className="line-clamp-3 text-sm">
+                  {item.summary}
+                </CardDescription>
+              )}
+              {item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 5 pt-2">
+                  {item.tags.slice(0, 4).map((tag, index) => (
+                    <Badge key={index} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               )}
             </CardHeader>
           </Link>

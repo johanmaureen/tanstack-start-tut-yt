@@ -96,6 +96,14 @@ export const mapUrlFn = createServerFn({
     })
     return result.links
   })
+
+export type BulkSrcapeProgress = {
+  completed: number
+  total: number
+  url: string
+  status: 'success' | 'failed'
+}
+
 export const bulkScrapeUrlsFn = createServerFn({
   method: 'POST',
 })
@@ -105,7 +113,8 @@ export const bulkScrapeUrlsFn = createServerFn({
       urls: z.array(z.string().url()),
     }),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    const total = data.urls.length
     for (let i = 0; i < data.urls.length; i++) {
       const url = data.urls[i]
       const item = await prisma.savedItem.create({
@@ -115,6 +124,8 @@ export const bulkScrapeUrlsFn = createServerFn({
           status: 'PENDING',
         },
       })
+
+      let status: BulkSrcapeProgress['status'] = 'success'
 
       try {
         const result = await firecrawl.scrape(url, {
@@ -156,6 +167,7 @@ export const bulkScrapeUrlsFn = createServerFn({
           },
         })
       } catch {
+        status = 'failed'
         await prisma.savedItem.update({
           where: {
             id: item.id,
@@ -165,6 +177,14 @@ export const bulkScrapeUrlsFn = createServerFn({
           },
         })
       }
+      const progress: BulkSrcapeProgress = {
+        completed: i + 1,
+        total: total,
+        url: url,
+        status: status,
+      }
+
+      yield progress
     }
   })
 
