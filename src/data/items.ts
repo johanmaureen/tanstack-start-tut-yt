@@ -33,7 +33,8 @@ export const scrapeUrlFn = createServerFn({
           'markdown',
           {
             type: 'json',
-            schema: extractSchema,
+            //schema: extractSchema,
+            prompt: 'please extract the author and also publishedAt timestamp',
           },
         ],
         location: {
@@ -133,7 +134,9 @@ export const bulkScrapeUrlsFn = createServerFn({
             'markdown',
             {
               type: 'json',
-              schema: extractSchema,
+              //schema: extractSchema,
+              prompt:
+                'please extract the author and also publishedAt timestamp',
             },
           ],
           location: {
